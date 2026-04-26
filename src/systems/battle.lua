@@ -4,6 +4,7 @@ local Battle = {}
 local BattleState = {
     PLAYER_TURN = "PLAYER_TURN",
     ENEMY_TURN = "ENEMY_TURN",
+    THINKING = "THINKING",
     ANIMATING = "ANIMATING"
 }
 
@@ -30,6 +31,10 @@ function Battle.new()
         timer = 0,
         duration = 0.5
     }
+    
+    -- Timer para "pensamento" do inimigo
+    self.thinking_timer = 0
+    self.thinking_duration = 0
     
     return self
 end
@@ -64,8 +69,16 @@ function Battle:startBattle(player, opponent, collision_x, collision_y)
     bump_world:update(player, player.x, player.y)
     bump_world:update(opponent, opponent.x, opponent.y)
     
+    -- Resetar vida do oponente para 100% no início da batalha
+    opponent.health = 100
+    opponent.max_health = 100
+    
     self.current_state = BattleState.PLAYER_TURN
-    print("Batalha iniciada!")
+    self.attack_feedback.active = false
+    self.thinking_timer = 0
+    
+    print(string.format("[BATTLE] Iniciada! Oponente: %s (HP: %d/%d)", 
+        opponent.type or "Unknown", opponent.health, opponent.max_health))
 end
 
 function Battle:handlePlayerInput(key, player)
@@ -121,14 +134,21 @@ function Battle:handlePlayerInput(key, player)
     player.y = self.player_grid_y * cell_size + cell_offset
     bump_world:update(player, player.x, player.y)
     
-    -- Mudar para turno do inimigo
-    self.current_state = BattleState.ENEMY_TURN
+    -- Mudar para turno do inimigo (com delay de pensamento)
+    self.current_state = BattleState.THINKING
+    self.thinking_duration = math.random(5, 10) / 10
+    self.thinking_timer = self.thinking_duration
     return true
 end
 
 function Battle:performAttack(attacker, target)
     local damage = 25
     local died = false
+    local target_is_enemy = (target == self.current_opponent)
+    local attacker_name = target_is_enemy and "Jogador" or "Inimigo"
+    local target_name = target_is_enemy and "Inimigo" or "Jogador"
+    
+    local old_hp = target.health or 100
     
     -- Implementação direta: verificar se target tem health e aplicar dano
     if target and target.health and type(target.health) == "number" then
@@ -137,7 +157,6 @@ function Battle:performAttack(attacker, target)
             target.health = 0
             died = true
         end
-        print(string.format("Ataque! %d de dano. HP alvo: %d/%d", damage, target.health, (target.max_health or 100)))
     else
         -- Se não tiver health, adicionar health dinamicamente (fallback)
         if target then
@@ -147,27 +166,32 @@ function Battle:performAttack(attacker, target)
                 target.health = 0
                 died = true
             end
-            print(string.format("Ataque! %d de dano (health adicionado). HP: %d/%d", damage, target.health, target.max_health))
         else
-            print("ERRO: target inválido")
+            print("[BATTLE] ERRO: target inválido")
             return
         end
     end
+    
+    print(string.format("[BATTLE] %s atacou %s! Dano: %d | HP: %d -> %d", 
+        attacker_name, target_name, damage, old_hp, target.health))
     
     -- Ativar feedback visual
     self.attack_feedback.active = true
     self.attack_feedback.target = target
     self.attack_feedback.timer = self.attack_feedback.duration
     
-    print(string.format("Ataque! %d de dano", damage))
-    
     if died then
-        self:endBattle(true)
+        -- Se o alvo morreu, terminar a batalha. 
+        -- Vitória se o alvo for o inimigo.
+        self:endBattle(target_is_enemy)
     else
         -- Mudar turno após ataque
         if self.current_state == BattleState.PLAYER_TURN then
-            self.current_state = BattleState.ENEMY_TURN
-        else
+            -- Iniciar "pensamento" do inimigo
+            self.current_state = BattleState.THINKING
+            self.thinking_duration = math.random(5, 10) / 10 -- 0.5s a 1.0s
+            self.thinking_timer = self.thinking_duration
+        elseif self.current_state == BattleState.ENEMY_TURN then
             self.current_state = BattleState.PLAYER_TURN
         end
     end
@@ -185,6 +209,11 @@ function Battle:update(dt, player)
     -- IA do inimigo
     if self.current_state == BattleState.ENEMY_TURN then
         self:updateEnemyAI(dt, player)
+    elseif self.current_state == BattleState.THINKING then
+        self.thinking_timer = self.thinking_timer - dt
+        if self.thinking_timer <= 0 then
+            self.current_state = BattleState.ENEMY_TURN
+        end
     end
 end
 
@@ -374,7 +403,12 @@ function Battle:drawArena(offset_x, offset_y, camera_x, camera_y)
     
     -- Mostrar turno atual
     love.graphics.setColor(1, 1, 1)
-    local turn_text = self.current_state == BattleState.PLAYER_TURN and "Seu Turno" or "Turno do Inimigo"
+    local turn_text = "Seu Turno"
+    if self.current_state == BattleState.ENEMY_TURN then
+        turn_text = "Turno do Inimigo"
+    elseif self.current_state == BattleState.THINKING then
+        turn_text = "Inimigo Pensando..."
+    end
     love.graphics.print(turn_text, 10, 10)
     
     -- Mostrar vida do oponente

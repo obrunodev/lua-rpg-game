@@ -8,6 +8,9 @@ function Player:new(x, y)
     self.vx = 0
     self.vy = 0
     
+    self.health = 100
+    self.max_health = 100
+    
     -- Adicionar ao mundo de colisão bump
     bump_world:add(self, self.x, self.y, self.width, self.height)
 end

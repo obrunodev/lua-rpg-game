@@ -29,10 +29,12 @@
 - [x] Sistema de conversão worldToGrid/gridToWorld
 - [ ] Implementar sistema de spawn de itens no mapa
 
-### Fase 3: NPCs & IA (Semanas 5-6)
-- [ ] Criar classe base Entity com Classic.lua
-- [ ] Implementar 19 NPCs com IA básica
-- [ ] Máquina de estados: Patrulha → Busca → Fuga → Combate
+### Fase 3: NPCs & IA (Semanas 5-6) ✅ CONCLUÍDA
+- [x] Criar classe base Entity com Classic.lua
+- [x] Implementar NPCs com IA básica de movimento aleatório
+- [x] Sistema de movimento independente (2 segundos entre movimentos)
+- [x] Colisões com bump.lua respeitando paredes e limites do mapa
+- [ ] Máquina de estados avançada: Patrulha → Busca → Fuga → Combate
 - [ ] Sistema de percepção (visão/audição)
 
 ### Fase 4: Sobrevivência & Itens (Semanas 7-8)
@@ -41,11 +43,21 @@
 - [ ] Sistema de inventário simples
 - [ ] Efeitos de status e regeneração
 
-### Fase 5: Sistema de Batalha (Semanas 9-10)
-- [ ] Implementar grid de combate 10x10
-- [ ] Sistema de turnos com iniciativa
-- [ ] Ações básicas: atacar, defender, usar item
-- [ ] Transição suave entre exploração e combate
+### Fase 5: Sistema de Batalha (Semanas 9-10) ✅ CONCLUÍDA
+- [x] Implementar grid de combate 10x10
+- [x] Sistema de turnos com iniciativa (Player → Enemy)
+- [x] Ações básicas: atacar, defender, usar item
+- [x] Transição automática por contato (Player toca NPC)
+- [x] Arena visual com overlay escuro e área iluminada
+- [x] Sistema de dano e feedback visual
+- [x] Posicionamento tático (1 célula por movimento)
+- [x] Câmera focada nos combatentes
+- [x] Interface com coordenadas de grid e status
+- [x] **Posicionamento Inicial Estratégico**: Player [2,5] vs Inimigo [9,5]
+- [x] **IA de Combate Avançada**: Busca ativa e ataque por adjacência
+- [x] **Obstáculos de Terreno**: Pedra/Árvore/Água bloqueiam movimento
+- [x] **Arena Centralizada**: Grid 10x10 sempre centralizado na tela
+- [x] **Terreno Real**: Cores do mapa procedural exibidas na arena
 
 ## 4. Arquitetura de Sistemas Implementados
 
@@ -59,12 +71,23 @@
 ### 4.2 Sistema de Entidades
 - **Entity Base**: Classe base em `src/entities/entity.lua` (Classic.lua)
 - **Player**: Movimento WASD com colisões via `bump_world:move()`
-- **Integração**: Player registrado no mundo Bump com colisões reais
+- **NPCs**: Entidades com IA de movimento aleatório (2s intervalo)
+- **Sistema de Combate**: Gatilho por contato, arena 10x10, turnos táticos
+- **IA de Batalha**: Inimigos movem-se estrategicamente em direção ao Player
+- **Integração**: Todas entidades registradas no mundo Bump com colisões reais
 
-### 4.3 Estados do Jogo
+### 4.3 Sistema de Batalha (`src/systems/battle.lua`)
+- **Arena 10x10**: Grid tático com terreno real do mapa
+- **Posicionamento**: Player [2,5] vs Inimigo [9,5] (extremos opostos)
+- **IA Inimiga**: Busca ativa se distante, ataque se adjacente
+- **Obstáculos**: Terreno não-walkable bloqueia movimento
+- **Visual**: Arena centralizada, cores de terreno, HUD de coordenadas
+- **Turnos**: PLAYER_TURN → ENEMY_TURN com ações táticas
+
+### 4.4 Estados do Jogo
 - **EXPLORATION**: Movimento livre com câmera seguindo player
 - **BATTLE**: Visualização em grid com coordenadas convertidas
-- **Transição**: Tecla 'B' alterna entre modos
+- **Transição**: Contato automático com NPCs (Player → BATTLE)
 
 ## 5. Fluxo de Dados (Data Driven)
 - Itens são definidos em `src/data/items_db.lua`.
@@ -81,7 +104,9 @@
 ## 7. Métricas de Sucesso da POC
 - [x] Player consegue explorar mapa procedural
 - [ ] Sistema de sobrevivência funcional (fome/frio)
-- [ ] NPCs interagem via máquina de estados
-- [x] Transição para combate funciona
+- [x] NPCs com IA básica e movimento independente
+- [x] Transição automática para combate por contato
+- [x] Sistema de combate tático funcional com IA avançada
 - [x] Colisões funcionam com tiles sólidos
 - [x] Performance estável (>30 FPS)
+- [x] Interface de combate com coordenadas e status

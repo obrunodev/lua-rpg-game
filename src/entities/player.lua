@@ -37,13 +37,53 @@ function Player:update(dt)
         self.vy = self.vy * 0.707
     end
     
-    -- Mover com colisão (placeholder por enquanto)
+    -- Mover com colisão e filtro para detectar NPCs
     local actualX, actualY, collisions, len = bump_world:move(self, 
         self.x + self.vx * dt, 
-        self.y + self.vy * dt)
+        self.y + self.vy * dt,
+        function(item, other)
+            -- Configurar tipos de colisão
+            if other.type == "NPC" then
+                return 'cross' -- Permitir atravessar para detectar contato
+            elseif type(other) == "string" and (other:match("tile_") or false) then
+                -- Tiles do mapa (pedra, árvore, água)
+                return 'slide' -- Deslizar nas paredes
+            else
+                return 'slide' -- Padrão para outros objetos
+            end
+        end)
     
     self.x = actualX
     self.y = actualY
+    
+    -- Verificar colisões com NPCs para iniciar combate
+    for i = 1, len do
+        local collision = collisions[i]
+        if collision.other.type == "NPC" and collision.other.active then
+            -- Iniciar combate
+            local main = require('main')
+            
+            -- Mudar estado global para BATTLE
+            main.set_current_state(main.GameState.BATTLE)
+            
+            -- Obter instância global do battle system
+            local battle_system = main.get_battle_system()
+            
+            -- Iniciar sistema de batalha
+            battle_system:startBattle(self, collision.other, self.x, self.y)
+            
+            -- Isolar combate: desativar outros NPCs
+            local npcs = main.get_monsters()
+            for _, other_npc in ipairs(npcs) do
+                if other_npc ~= collision.other then
+                    other_npc.active = false
+                    other_npc.visible = false
+                end
+            end
+            
+            break -- Apenas um combate por vez
+        end
+    end
 end
 
 function Player:draw()

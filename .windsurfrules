@@ -1,0 +1,30 @@
+# Regras de Desenvolvimento - Projeto "Ilha Obscura" (LÖVE2D)
+
+## Perfil Técnico
+- Linguagem: Lua 5.4 (LÖVE2D).
+- Paradigma: Funcional com tabelas ou Orientação a Objetos simples (Classic.lua).
+- Estilo: Código limpo, modular e DRY.
+
+## Arquitetura de Pastas
+- `src/entities/`: Lógica de personagens e NPCs.
+- `src/systems/`: Sistemas globais (combate, sobrevivência, procedural).
+- `src/data/`: Tabelas de constantes (itens, lores, atributos).
+- `lib/`: Bibliotecas externas (bump, flux, push).
+
+## Regras para Sprites e Animações
+1. **Quads**: Nunca desenhe uma imagem diretamente se for um sprite sheet. Use sempre `love.graphics.newQuad`.
+2. **Anim8**: Use a biblioteca `anim8` para gerenciar animações. Não tente criar lógica de troca de frame manualmente.
+3. **Data-Driven**: Sempre defina o `frame_width` e `frame_height` explicitamente no construtor da entidade.
+4. **Centralização**: Sempre defina o offset (ox, oy) como metade do tamanho do frame para que as rotações e posições sejam centralizadas.
+
+## Regras de Ouro para a IA
+1. **Modularidade**: Nunca crie arquivos com mais de 200 linhas. Se crescer, sugira refatoração.
+2. **Localização**: Use `local` para todas as variáveis e funções. Evite poluir o `_G`.
+3. **Colisões**: Use a biblioteca `bump.lua` para detecção de colisão e movimentação.
+4. **Estado do Jogo**: Use uma máquina de estados simples no `main.lua` (menu, play, battle, gameover).
+5. **UI**: Não use editores visuais. Toda UI deve ser programada de forma relativa à resolução (use `push.lua` para resolução virtual).
+
+## Instruções de Resposta
+- Seja conciso.
+- Se o contexto estiver grande, peça para o usuário resumir o progresso e limpar o histórico.
+- Antes de grandes mudanças, descreva o plano de implementação.

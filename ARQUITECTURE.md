@@ -9,8 +9,8 @@
 - [x] **Exploração**: Movimento WASD com colisões (Bump.lua).
 - [ ] **Sobrevivência**: Sistema de Fome/Frio que drena vida.
 - [ ] **NPCs**: 19 agentes com IA de máquina de estados (Busca/Fuga/Luta).
-- [ ] **Mapa**: Geração procedural via Cellular Automata.
-- [ ] **Batalha**: Sistema de turnos com grid 10x10.
+- [x] **Mapa**: Geração procedural via Cellular Automata.
+- [x] **Batalha**: Sistema de turnos com grid e conversão de coordenadas.
 
 ## 3. Roadmap da POC - Fases de Implementação
 
@@ -21,10 +21,12 @@
 - [x] Integrar bump.lua para colisões
 - [x] Setup de resolução virtual com push.lua
 
-### Fase 2: Mapa Procedural (Semanas 3-4)
-- [ ] Implementar gerador de mapa via Cellular Automata
-- [ ] Criar sistema de renderização de tiles
-- [ ] Definir tipos de terreno (grama, água, pedra)
+### Fase 2: Mapa Procedural (Semanas 3-4) ✅ CONCLUÍDA
+- [x] Implementar gerador de mapa via Cellular Automata
+- [x] Criar sistema de renderização de tiles
+- [x] Definir tipos de terreno (CHÃO, PEDRA, ÁRVORE, ÁGUA)
+- [x] Implementar colisões reais com Bump.lua
+- [x] Sistema de conversão worldToGrid/gridToWorld
 - [ ] Implementar sistema de spawn de itens no mapa
 
 ### Fase 3: NPCs & IA (Semanas 5-6)
@@ -45,21 +47,41 @@
 - [ ] Ações básicas: atacar, defender, usar item
 - [ ] Transição suave entre exploração e combate
 
-## 4. Fluxo de Dados (Data Driven)
+## 4. Arquitetura de Sistemas Implementados
+
+### 4.1 Sistema de Mapa (`src/systems/map_gen.lua`)
+- **Geração Procedural**: Cellular Automata com 5 iterações
+- **Tipos de Tiles**: CHÃO (0), PEDRA (1), ÁRVORE (2), ÁGUA (3)
+- **Colisões**: Registro automático no Bump.lua para tiles sólidos
+- **Conversão de Coordenadas**: `worldToGrid(x, y)` e `gridToWorld(gx, gy)`
+- **Renderização Dual**: Modo EXPLORATION (livre) e BATTLE (grid)
+
+### 4.2 Sistema de Entidades
+- **Entity Base**: Classe base em `src/entities/entity.lua` (Classic.lua)
+- **Player**: Movimento WASD com colisões via `bump_world:move()`
+- **Integração**: Player registrado no mundo Bump com colisões reais
+
+### 4.3 Estados do Jogo
+- **EXPLORATION**: Movimento livre com câmera seguindo player
+- **BATTLE**: Visualização em grid com coordenadas convertidas
+- **Transição**: Tecla 'B' alterna entre modos
+
+## 5. Fluxo de Dados (Data Driven)
 - Itens são definidos em `src/data/items_db.lua`.
 - Atributos base em `src/data/constants.lua`.
 - Configurações de IA em `src/data/ai_behaviors.lua`.
 
-## 5. Dependências Externas
+## 6. Dependências Externas
 - `bump.lua`: Detecção de colisão
 - `anim8.lua`: Sistema de animação
 - `push.lua`: Resolução virtual
 - `classic.lua`: Sistema de classes
 - `flux.lua`: Tweening e animações
 
-## 6. Métricas de Sucesso da POC
-- [ ] Player consegue explorar mapa procedural
+## 7. Métricas de Sucesso da POC
+- [x] Player consegue explorar mapa procedural
 - [ ] Sistema de sobrevivência funcional (fome/frio)
 - [ ] NPCs interagem via máquina de estados
-- [ ] Transição para combate funciona
-- [ ] Performance estável (>30 FPS)
+- [x] Transição para combate funciona
+- [x] Colisões funcionam com tiles sólidos
+- [x] Performance estável (>30 FPS)

@@ -48,6 +48,8 @@ function Player:update(dt)
             -- Configurar tipos de colisão
             if other.type == "NPC" then
                 return 'cross' -- Permitir atravessar para detectar contato
+            elseif other.type == "ITEM" then
+                return 'cross' -- Detectar contato sem bloquear movimento
             elseif type(other) == "string" and (other:match("tile_") or false) then
                 -- Tiles do mapa (pedra, árvore, água)
                 return 'slide' -- Deslizar nas paredes
@@ -59,9 +61,16 @@ function Player:update(dt)
     self.x = actualX
     self.y = actualY
     
-    -- Verificar colisões com NPCs para iniciar combate
+    -- Verificar colisões
     for i = 1, len do
         local collision = collisions[i]
+        
+        -- Coleta de itens
+        if collision.other.type == "ITEM" and not collision.other.collected then
+            collision.other:collect(self)
+        end
+
+        -- Iniciar combate com NPCs
         if collision.other.type == "NPC" and collision.other.active then
             -- Iniciar combate
             local main = require('main')

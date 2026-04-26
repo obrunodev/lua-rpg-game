@@ -11,10 +11,9 @@ local GameState = {
 }
 
 local current_state = GameState.MENU
-local player
-local map
-local battle_system
 local npcs = {} -- Lista de NPCs no jogo
+local items = {} -- Lista de itens no jogo
+local health_bar
 
 function love.load()
     print("Ilha Obscura carregada com sucesso")
@@ -38,14 +37,36 @@ function love.load()
     local Battle = require('src.systems.battle')
     battle_system = Battle.new()
     
+    -- Criar Health UI
+    local HealthBar = require('src.ui.health_bar')
+    health_bar = HealthBar(player)
+    
+    -- Criar itens (Potions)
+    local Item = require('src.entities.item')
+    local spawned_items = 0
+    while spawned_items < 5 do
+        local gx = math.random(0, map.width - 1)
+        local gy = math.random(0, map.height - 1)
+        
+        if map:isWalkable(gx, gy) then
+            local x, y = gx * map.cell_size, gy * map.cell_size
+            local item = Item(x, y)
+            table.insert(items, item)
+            spawned_items = spawned_items + 1
+        end
+    end
+    
     -- Criar alguns NPCs para teste
-    package.loaded['src.entities.npc'] = nil -- Forçar recarga
     local NPC = require('src.entities.npc')
     for i = 1, 5 do
-        local mx = math.random(200, 2360)
-        local my = math.random(200, 1720)
-        local npc = NPC(mx, my)
-        table.insert(npcs, npc)
+        local gx = math.random(0, map.width - 1)
+        local gy = math.random(0, map.height - 1)
+        
+        if map:isWalkable(gx, gy) then
+            local x, y = gx * map.cell_size, gy * map.cell_size
+            local npc = NPC(x, y)
+            table.insert(npcs, npc)
+        end
     end
     
     -- Iniciar no estado de exploração
@@ -61,6 +82,11 @@ function love.update(dt)
             if npc.active then
                 npc:update(dt)
             end
+        end
+        
+        -- Atualizar Itens
+        for _, item in ipairs(items) do
+            item:update(dt)
         end
         
     elseif current_state == GameState.BATTLE then
@@ -93,15 +119,23 @@ function love.draw()
             end
         end
         
+        -- Renderizar Itens
+        for _, item in ipairs(items) do
+            item:draw()
+        end
+        
         -- Renderizar player
         player:draw()
         
         love.graphics.pop()
         
+        -- Renderizar UI (sem transformação da câmera)
+        health_bar:draw()
+        
         -- Mostrar coordenadas para debug
         local gx, gy = map:worldToGrid(player.x, player.y)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.print(string.format("World: (%.0f, %.0f) | Grid: (%d, %d)", player.x, player.y, gx, gy), 10, 10)
+        love.graphics.print(string.format("World: (%.0f, %.0f) | Grid: (%d, %d)", player.x, player.y, gx, gy), 10, 50)
         
     elseif current_state == GameState.BATTLE then
         -- Calcular câmera focada nos combatentes
